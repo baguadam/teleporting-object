@@ -52,19 +52,9 @@ protected:
 
 	float m_ElapsedTimeInSec = 0.0f;
 
-
-	// Table params
-
-	static constexpr float     TABLE_SIZE = 5.0f;
-	static constexpr glm::vec3 TABLE_POS = glm::vec3( 0.0f, 0.0f, 0.0f );
-
 	// Suzanne params
 
-	static constexpr glm::vec3 SUZANNE_POS = glm::vec3( 2.0f, 1.0f, 2.0f );
-
-	// Sphere params
-
-	static constexpr glm::vec3 SPHERE_POS = glm::vec3( -2.0f, 1.0f, -2.0f );
+	static constexpr glm::vec3 SUZANNE_POS = glm::vec3( 0.0f, 0.0f, 0.0f );
 
 	// Kamera
 	Camera m_camera;
@@ -111,20 +101,14 @@ protected:
 	void CleanShaders();
 
 	// Geometriával kapcsolatos változók
-
-	OGLObject m_quadGPU = {};
-	OGLObject m_SuzanneGPU = {};
-	OGLObject m_sphereGPU = {};
+	OGLObject m_SuzanneGPU = {}; // Suzanne
 
 	// Geometria inicializálása, és törtlése
 	void InitGeometry();
 	void CleanGeometry();
 
 	// Textúrázás, és változói
-
-	GLuint m_woodTextureID = 0;
 	GLuint m_SuzanneTextureID = 0;
-	GLuint m_sphereTextureID = 0;
 
 	float m_cutoff = 0.0f;
 	int lightType = 0;
