@@ -125,7 +125,7 @@ int main( int argc, char* args[] )
 	}
 
 	std::stringstream window_title;
-	window_title << "OpenGL " << glVersion[0] << "." << glVersion[1];
+	window_title << "OpenGL " << glVersion[0] << "." << glVersion[1] << " " << title;
 	SDL_SetWindowTitle(win, window_title.str().c_str());
 
 	//Imgui init
@@ -147,7 +147,7 @@ int main( int argc, char* args[] )
 		SDL_Event ev;
 
 		// alkalmazás példánya
-		CMyApp app;
+		CMyApp app{win};
 		if (!app.Init())
 		{
 			SDL_GL_DeleteContext(context);

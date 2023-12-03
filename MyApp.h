@@ -17,6 +17,8 @@
 #include "GLUtils.hpp"
 #include "Camera.h"
 
+static std::string title = "Alap fejlec";
+
 struct SUpdateInfo
 {
 	float ElapsedTimeInSec = 0.0f; // Program indulása óta eltelt idő
@@ -25,8 +27,13 @@ struct SUpdateInfo
 
 class CMyApp
 {
+private:
+	SDL_Window *win;
+
+	void ChangeTitle(); // metódus a fejléc módosításához 
+
 public:
-	CMyApp();
+	CMyApp(SDL_Window *_win);
 	~CMyApp();
 
 	bool Init();
@@ -35,6 +42,7 @@ public:
 	void Update( const SUpdateInfo& );
 	void Render();
 	void RenderGUI();
+
 
 	void KeyboardDown(const SDL_KeyboardEvent&);
 	void KeyboardUp(const SDL_KeyboardEvent&);
@@ -58,6 +66,7 @@ protected:
 
 	// Kamera
 	Camera m_camera;
+	float m_radius = 10;
 
 	// Fényforrások
 

@@ -2,10 +2,11 @@
 #include "SDL_GLDebugMessageCallback.h"
 #include "ObjParser.h"
 #include <iostream>
+#include <sstream>
 
 #include <imgui.h>
 
-CMyApp::CMyApp()
+CMyApp::CMyApp(SDL_Window *_win) : win(_win) 
 {
 }
 
@@ -158,7 +159,31 @@ void CMyApp::Render()
 
 void CMyApp::RenderGUI()
 {
-	// GUI
+	if (ImGui::Begin("Teleporting objects")) {
+		ImGui::SliderFloat("Távolság", &m_radius, 0, 20);
+
+		char buffer[256]; // buffer az title beolvasáságoz
+		strcpy(buffer, title.c_str()); // az alap címet belemásoljuk
+
+		// beolvassuk a beírt szöveget, majd módosítjuk a tartalmát az ablak fejlécének
+		if (ImGui::InputText("Ablak címe", buffer, IM_ARRAYSIZE(buffer))) {
+			title = buffer;
+			ChangeTitle();
+		}
+	}
+	ImGui::End();
+}
+
+void CMyApp::ChangeTitle() {
+	// kérdezzük le az OpenGL verziót
+	int glVersion[2] = { -1, -1 };
+	glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
+	glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
+
+	// mindent ugyanúgy csinálunk, mint a mainban
+	std::stringstream window_title;
+	window_title << "OpenGL " << glVersion[0] << "." << glVersion[1] << " " << title;
+	SDL_SetWindowTitle(win, window_title.str().c_str());
 }
 
 GLint CMyApp::ul( const char* uniformName ) noexcept
