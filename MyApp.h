@@ -96,14 +96,14 @@ protected:
 	// 
 	// float m_Shininess = 1.0;
 
-	// Shaderek inicializálása, és törtlése
+	// Shaderek inicializálása, és törlése
 	void InitShaders();
 	void CleanShaders();
 
 	// Geometriával kapcsolatos változók
 	OGLObject m_SuzanneGPU = {}; // Suzanne
 
-	// Geometria inicializálása, és törtlése
+	// Geometria inicializálása, és törlése
 	void InitGeometry();
 	void CleanGeometry();
 

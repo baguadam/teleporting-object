@@ -2,6 +2,9 @@
 
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform2.hpp>
 
 class Camera
 {
@@ -20,6 +23,7 @@ public:
 	inline glm::mat4 GetViewProj() const { return m_matViewProj; }
 
 	void Update(float _deltaTime);
+	void UpdateU();
 
 	void SetView(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _up);
 	void LookAt(glm::vec3 _at);
@@ -32,6 +36,7 @@ public:
 	void SetZNear( const float _zn ) noexcept;
 	inline float GetZFar() const { return m_zFar; }
 	void SetZFar( const float _zf ) noexcept;
+	inline float GetDistance() const { return m_distance;  }
 
 	void SetProj(float _angle, float _aspect, float _zn, float _zf); 
 
@@ -55,7 +60,8 @@ private:
 	
 	//  The traversal speed of the camera
 	float	m_speed = 16.0f;
-	
+
+	float	m_constSpeed = 0.2f;	// konstans kerületi sebesség, amit az omega = v_k/r képletben fogunk felhasználni
 
 	bool	m_slow = false;
 
@@ -77,7 +83,7 @@ private:
 	float	m_v;
 
 	// The distance of the look at point from the camera. 
-	float	m_distance;
+	float	m_distance = 10.0f; // ez legyen megegyezõ a kezdeti sugárral most
 
 	// The unit vector pointing towards the viewing direction.
 	glm::vec3	m_forward;

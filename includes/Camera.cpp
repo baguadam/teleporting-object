@@ -6,12 +6,13 @@
 
 Camera::Camera()
 {
-	SetView( glm::vec3(0.0f,20.0f,20.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
+	SetView( glm::vec3(0.0f,0.0f,10.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,1.0f,0.0f));
 }
 
 Camera::Camera(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _worldUp)
 {
 	SetView(_eye, _at, _worldUp);
+	m_distance = 10.0f;
 }
 
 Camera::~Camera()
@@ -103,6 +104,14 @@ void Camera::Update(float _deltaTime)
 	}
 }
 
+void Camera::UpdateU() {
+	m_u += m_constSpeed / m_distance; // kiszámítjuk a szögsebességet a sugártól függõen
+									  // így a kerületi sebesség értéke állandó marad, míg a 
+									  // szögsebesség változik, közelebb gyorsabb, távolabb lassabb
+
+	UpdateParams();
+}
+
 void Camera::UpdateUV( float du, float dv )
 {
 	m_u += du;
@@ -114,6 +123,7 @@ void Camera::UpdateUV( float du, float dv )
 void Camera::UpdateDistance( float dDistance )
 {
 	m_distance += dDistance;
+
 	UpdateParams();
 }
 
@@ -211,10 +221,10 @@ void Camera::MouseMove(const SDL_MouseMotionEvent& mouse)
 	{
 		UpdateUV(mouse.xrel/100.0f, mouse.yrel/100.0f);
 	}
-	if ( mouse.state & SDL_BUTTON_RMASK )
-	{
-		UpdateDistance( mouse.yrel / 100.0f );
-	}
+	//if ( mouse.state & SDL_BUTTON_RMASK )
+	//{
+	//	UpdateDistance( mouse.yrel / 100.0f );
+	//}
 }
 
 void Camera::MouseWheel(const SDL_MouseWheelEvent& wheel)

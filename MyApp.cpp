@@ -1,6 +1,7 @@
 #include "MyApp.h"
 #include "SDL_GLDebugMessageCallback.h"
 #include "ObjParser.h"
+#include <iostream>
 
 #include <imgui.h>
 
@@ -47,8 +48,7 @@ void CMyApp::InitGeometry()
 		{ 2, offsetof( Vertex, texcoord ), 2, GL_FLOAT },
 	};
 
-	// Suzanne
-
+	// Suzanne betöltése
 	MeshObject<Vertex> suzanneMeshCPU = ObjParser::parse("Assets/Suzanne.obj");
 	m_SuzanneGPU = CreateGLObjectFromMesh( suzanneMeshCPU, vertexAttribList );
 }
@@ -92,10 +92,11 @@ bool CMyApp::Init()
 
 	// kamera
 	m_camera.SetView(
-		glm::vec3(0.0, 7.0, 7.0),// honnan nézzük a színteret	   - eye
-		glm::vec3(0.0, 0.0, 0.0),   // a színtér melyik pontját nézzük - at
-		glm::vec3(0.0, 1.0, 0.0));  // felfelé mutató irány a világban - up
+		glm::vec3(0.0, 0.0,	m_camera.GetDistance()),					// honnan nézzük a színteret	   - eye
+		glm::vec3(0.0, 0.0, 0.0),										// a színtér melyik pontját nézzük - at
+		glm::vec3(0.0, 1.0, 0.0));										// felfelé mutató irány a világban - up
 
+	std::cout << m_camera.GetDistance() << '\n';
 
 	return true;
 }
@@ -119,6 +120,8 @@ void CMyApp::Render()
 	// töröljük a frampuffert (GL_COLOR_BUFFER_BIT)...
 	// ... és a mélységi Z puffert (GL_DEPTH_BUFFER_BIT)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	m_camera.UpdateU();
 
 	// - VAO beállítása
 	glUseProgram( m_programID );
@@ -155,32 +158,7 @@ void CMyApp::Render()
 
 void CMyApp::RenderGUI()
 {
-	//// ImGui::ShowDemoWindow();
-	//if (ImGui::Begin("Lights")) {
-	//	ImGui::SliderInt("Fénytípus", &lightType, 0, 2);
-	//	if (lightType == 0) {
-	//		ImGui::SliderFloat3("Irány", glm::value_ptr(m_lightPos), -10, 10);
-	//		m_lightPos.w = 0.0f;
-	//	}
-	//	else {
-	//		ImGui::SliderFloat3("Pozíció", glm::value_ptr(m_lightPos), -5, 5);
-	//		m_lightPos.w = 1.0f;
-
-	//		ImGui::SliderFloat("Constant Atten", &m_lightConstantAttenuation, 0, 1);
-	//		ImGui::SliderFloat("Linear Atten", &m_lightLinearAttenuation, 0, 1);
-	//		ImGui::SliderFloat("Quadratic Atten", &m_lightQuadraticAttenuation, 0, 1);
-	//		
-	//		if (lightType == 2) {
-	//			ImGui::SliderFloat3("Irány", glm::value_ptr(m_spotDir), -5, 5);
-	//			ImGui::SliderFloat("Nyílásszög", &m_cutoff, 0, 1);
-	//			m_lightPos.w = 2.0f;
-	//		}
-	//	}
-
-	//	ImGui::SliderFloat3("La", glm::value_ptr(m_La), 0, 1);
-	//	ImGui::SliderFloat3("Ka", glm::value_ptr(m_Ka), 0, 1);
-	//}
-	//ImGui::End();
+	// GUI
 }
 
 GLint CMyApp::ul( const char* uniformName ) noexcept
