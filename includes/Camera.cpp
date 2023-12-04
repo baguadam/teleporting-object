@@ -122,9 +122,18 @@ void Camera::UpdateUV( float du, float dv )
 
 void Camera::UpdateDistance( float dDistance )
 {
-	m_distance += dDistance;
+	// ne lehessen átmenni az alakzat másik oldalára, illetve túl távol sem
+	if (m_distance + dDistance >= 2.0f && m_distance + dDistance <= 100.0f) {
+		m_distance += dDistance;
+		UpdateParams();
+	}
+}
 
-	UpdateParams();
+void Camera::SetDistance(float _distance) noexcept {
+	// ne lehessen negatívba menni, ahogy ne lehessen 100 fölé sem
+	if (_distance >= 2.0f && _distance <= 100.0f) {
+		m_distance = _distance; // beállítjuk távolságnak a UI-on megadott értéket
+	}
 }
 
 void Camera::UpdateParams()

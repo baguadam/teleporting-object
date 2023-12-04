@@ -41,7 +41,6 @@ void CMyApp::CleanShaders()
 
 void CMyApp::InitGeometry()
 {
-
 	const std::initializer_list<VertexAttributeDescriptor> vertexAttribList =
 	{
 		{ 0, offsetof( Vertex, position ), 3, GL_FLOAT },
@@ -122,6 +121,7 @@ void CMyApp::Render()
 	// ... és a mélységi Z puffert (GL_DEPTH_BUFFER_BIT)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// m_camera.SetDistance(m_radius);
 	m_camera.UpdateU();
 
 	// - VAO beállítása
@@ -160,7 +160,9 @@ void CMyApp::Render()
 void CMyApp::RenderGUI()
 {
 	if (ImGui::Begin("Teleporting objects")) {
-		ImGui::SliderFloat("Távolság", &m_radius, 0, 20);
+		m_radius = m_camera.GetDistance(); // kiszedjük a kamerából a jelenlegi távolságot, ez lesz az érték a csúnkán
+		ImGui::SliderFloat("Távolság", &m_radius, 2.0, 100);
+		m_camera.SetDistance(m_radius); // beállítjuk távolságnak a megadott sugarat
 
 		char buffer[256]; // buffer az title beolvasáságoz
 		strcpy(buffer, title.c_str()); // az alap címet belemásoljuk

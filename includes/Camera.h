@@ -36,7 +36,8 @@ public:
 	void SetZNear( const float _zn ) noexcept;
 	inline float GetZFar() const { return m_zFar; }
 	void SetZFar( const float _zf ) noexcept;
-	inline float GetDistance() const { return m_distance;  }
+	inline float GetDistance() const { return m_distance; }
+	void SetDistance(const float _distance) noexcept;
 
 	void SetProj(float _angle, float _aspect, float _zn, float _zf); 
 
