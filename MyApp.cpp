@@ -1,18 +1,48 @@
 #include "MyApp.h"
 #include "SDL_GLDebugMessageCallback.h"
+#include "ParametricSurfaceMesh.hpp"
 #include "ObjParser.h"
 #include <iostream>
 #include <sstream>
 
 #include <imgui.h>
 
-CMyApp::CMyApp(SDL_Window *_win) : win(_win) 
+CMyApp::CMyApp(SDL_Window* _win) : win(_win)
 {
 }
 
 CMyApp::~CMyApp()
 {
 }
+
+// tórusz kirajzolásához szükséges adatok
+struct Torus
+{
+	float a, b;
+	Torus(float _a = 1.0f, float _b = 2.0f) : a(_a), b(_b) { }
+
+	glm::vec3 GetPos(float u, float v) const noexcept
+	{
+		u *= glm::two_pi<float>();
+		v *= -glm::two_pi<float>();
+		return glm::vec3(
+			(a * cosf(v) + b) * cosf(u),
+			a * sinf(v),
+			(a * cosf(v) + b) * sinf(u)
+		);
+	}
+	glm::vec3 GetNorm(float u, float v) const noexcept
+	{
+		glm::vec3 du = GetPos(u + 0.01f, v) - GetPos(u - 0.01f, v);
+		glm::vec3 dv = GetPos(u, v + 0.01f) - GetPos(u, v - 0.01f);
+
+		return glm::normalize(glm::cross(du, dv));
+	}
+	glm::vec2 GetTex(float u, float v) const noexcept
+	{
+		return glm::vec2(u, v);
+	}
+};
 
 void CMyApp::SetupDebugCallback()
 {
@@ -41,21 +71,27 @@ void CMyApp::CleanShaders()
 
 void CMyApp::InitGeometry()
 {
-	const std::initializer_list<VertexAttributeDescriptor> vertexAttribList =
-	{
-		{ 0, offsetof( Vertex, position ), 3, GL_FLOAT },
-		{ 1, offsetof( Vertex, normal   ), 3, GL_FLOAT },
-		{ 2, offsetof( Vertex, texcoord ), 2, GL_FLOAT },
-	};
-
 	// Suzanne betöltése
 	MeshObject<Vertex> suzanneMeshCPU = ObjParser::parse("Assets/Suzanne.obj");
 	m_SuzanneGPU = CreateGLObjectFromMesh( suzanneMeshCPU, vertexAttribList );
+
+	InitParametricSurfaceGeometry();
+}
+
+void CMyApp::InitParametricSurfaceGeometry() {
+	// Patametrikus felület
+	MeshObject<Vertex> surfaceMeshCPU = GetParamSurfMesh(Torus(), m_resolutionN, m_resolutionM);
+	m_ParamSurfaceGPU = CreateGLObjectFromMesh(surfaceMeshCPU, vertexAttribList);
 }
 
 void CMyApp::CleanGeometry()
 {
 	CleanOGLObject( m_SuzanneGPU );
+	CleanParametricSurfaceGeometry();
+}
+
+void CMyApp::CleanParametricSurfaceGeometry() {
+	CleanOGLObject( m_ParamSurfaceGPU );
 }
 
 void CMyApp::InitTextures()
@@ -63,11 +99,17 @@ void CMyApp::InitTextures()
 	glGenTextures( 1, &m_SuzanneTextureID );
 	TextureFromFile( m_SuzanneTextureID, "Assets/Wood_Table_Texture.png" );
 	SetupTextureSampling( GL_TEXTURE_2D, m_SuzanneTextureID );
+
+	glGenTextures(1, &m_ParamSurfaceTextureID);
+	TextureFromFile(m_ParamSurfaceTextureID, "Assets/Wood_Table_Texture.png");
+	SetupTextureSampling(GL_TEXTURE_2D, m_ParamSurfaceTextureID);
 }
 
 void CMyApp::CleanTextures()
 {
 	glDeleteTextures( 1, &m_SuzanneTextureID );
+	glDeleteTextures( 1, &m_ParamSurfaceTextureID );
+
 }
 
 bool CMyApp::Init()
@@ -124,8 +166,9 @@ void CMyApp::Render()
 	// m_camera.SetDistance(m_radius);
 	m_camera.UpdateU();
 
-	// - VAO beállítása
 	glUseProgram( m_programID );
+
+	// ******* SUZANNE ********
 	glBindVertexArray( m_SuzanneGPU.vaoID );
 
 	// - Textúrák beállítása, minden egységre külön
@@ -146,24 +189,48 @@ void CMyApp::Render()
 					GL_UNSIGNED_INT,
 					nullptr );
 
-	// shader kikapcsolasa
-	glUseProgram( 0 );
-
 	// - Textúrák kikapcsolása, minden egységre külön
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, 0 );
 
 	// VAO kikapcsolása
 	glBindVertexArray( 0 );
+	// ************************************************************************************ 
+
+	// ******* Parametric ********
+	glBindVertexArray(m_ParamSurfaceGPU.vaoID);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_ParamSurfaceTextureID);
+
+	matWorld = glm::translate(glm::vec3(0.0, -3.0, 0.0));
+
+	glUniformMatrix4fv(ul("world"), 1, GL_FALSE, glm::value_ptr(matWorld));
+	glUniformMatrix4fv(ul("worldIT"), 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(matWorld))));
+
+	glDrawElements(GL_TRIANGLES,
+				   m_ParamSurfaceGPU.count,
+				   GL_UNSIGNED_INT,
+				   nullptr);
+
+	// - Textúrák kikapcsolása, minden egységre külön
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	// ************************************************************************************ 
+
+	// shader kikapcsolasa
+	glUseProgram(0);
 }
 
 void CMyApp::RenderGUI()
 {
 	if (ImGui::Begin("Teleporting objects")) {
+		// ********* KAMERA TÁVOLSÁG ********* 
 		m_radius = m_camera.GetDistance(); // kiszedjük a kamerából a jelenlegi távolságot, ez lesz az érték a csúnkán
 		ImGui::SliderFloat("Távolság", &m_radius, 2.0, 100);
 		m_camera.SetDistance(m_radius); // beállítjuk távolságnak a megadott sugarat
 
+		// ********* SZÖVEG *********
 		char buffer[256]; // buffer az title beolvasáságoz
 		strcpy(buffer, title.c_str()); // az alap címet belemásoljuk
 
@@ -171,6 +238,24 @@ void CMyApp::RenderGUI()
 		if (ImGui::InputText("Ablak címe", buffer, IM_ARRAYSIZE(buffer))) {
 			title = buffer;
 			ChangeTitle();
+		}
+
+		// ********* TELEPORT *********
+		ImGui::SliderFloat3("(X, Y, Z) koordináták", glm::value_ptr(m_newObjectPosition), -10, 30);
+		if (ImGui::Button("Alakzat létrehozása")) {
+			std::cout << "A gombra lett kattintva!\n";
+			std::cout << m_newObjectPosition.x << '\n';
+			std::cout << m_newObjectPosition.y << '\n';
+			std::cout << m_newObjectPosition.z << '\n';
+		}
+
+		// ********* FELBONTÁS *********
+		const bool isNChanged = ImGui::SliderInt("Folbontás N", &m_resolutionN, 1, 100);
+		const bool isMChanged = ImGui::SliderInt("Folbontás M", &m_resolutionM, 1, 100);
+		if (isNChanged || isMChanged) 
+		{
+			CleanParametricSurfaceGeometry();
+			InitParametricSurfaceGeometry();
 		}
 	}
 	ImGui::End();

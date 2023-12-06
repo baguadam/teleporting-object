@@ -59,6 +59,9 @@
     <ClInclude Include="includes\ObjParser.h">
       <Filter>GL Utils</Filter>
     </ClInclude>
+    <ClInclude Include="ParametricSurfaceMesh.hpp">
+      <Filter>GL Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Vert_PosNormTex.vert">

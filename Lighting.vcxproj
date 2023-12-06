@@ -96,6 +96,7 @@
     <ClInclude Include="includes\GLUtils.hpp" />
     <ClInclude Include="includes\Camera.h" />
     <ClInclude Include="includes\ObjParser.h" />
+    <ClInclude Include="ParametricSurfaceMesh.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Vert_PosNormTex.vert" />

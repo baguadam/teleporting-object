@@ -25,6 +25,13 @@ struct SUpdateInfo
 	float DeltaTimeInSec   = 0.0f; // Előző Update óta eltelt idő
 };
 
+const std::initializer_list<VertexAttributeDescriptor> vertexAttribList =
+{
+	{ 0, offsetof(Vertex, position), 3, GL_FLOAT },
+	{ 1, offsetof(Vertex, normal), 3, GL_FLOAT },
+	{ 2, offsetof(Vertex, texcoord), 2, GL_FLOAT },
+};
+
 class CMyApp
 {
 private:
@@ -58,7 +65,11 @@ protected:
 	// Adat változók
 	//
 
+	glm::vec3 m_newObjectPosition{ 0.0f, 0.0f, 0.0f }; // az új objektum pozíciója, ezt olvassuk be a UI-ból
+
 	float m_ElapsedTimeInSec = 0.0f;
+	int m_resolutionN = 50;
+	int m_resolutionM = 50;
 
 	// Suzanne params
 
@@ -110,14 +121,18 @@ protected:
 	void CleanShaders();
 
 	// Geometriával kapcsolatos változók
-	OGLObject m_SuzanneGPU = {}; // Suzanne
+	OGLObject m_SuzanneGPU = {};	  // Suzanne
+	OGLObject m_ParamSurfaceGPU = {}; // Parametrikus felület
 
 	// Geometria inicializálása, és törlése
 	void InitGeometry();
+	void InitParametricSurfaceGeometry();
 	void CleanGeometry();
+	void CleanParametricSurfaceGeometry();
 
 	// Textúrázás, és változói
 	GLuint m_SuzanneTextureID = 0;
+	GLuint m_ParamSurfaceTextureID = 0;
 
 	float m_cutoff = 0.0f;
 	int lightType = 0;
