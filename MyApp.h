@@ -50,7 +50,6 @@ public:
 	void Render();
 	void RenderGUI();
 
-
 	void KeyboardDown(const SDL_KeyboardEvent&);
 	void KeyboardUp(const SDL_KeyboardEvent&);
 	void MouseMove(const SDL_MouseMotionEvent&);
@@ -66,10 +65,13 @@ protected:
 	//
 
 	glm::vec3 m_newObjectPosition{ 0.0f, 0.0f, 0.0f }; // az új objektum pozíciója, ezt olvassuk be a UI-ból
+	std::vector<glm::vec3> m_newPositionVector{};
 
 	float m_ElapsedTimeInSec = 0.0f;
 	int m_resolutionN = 50;
 	int m_resolutionM = 50;
+
+	const float m_sphereRadius = 2.0f;
 
 	// Suzanne params
 
@@ -123,12 +125,21 @@ protected:
 	// Geometriával kapcsolatos változók
 	OGLObject m_SuzanneGPU = {};	  // Suzanne
 	OGLObject m_ParamSurfaceGPU = {}; // Parametrikus felület
+	OGLObject m_ParamSphereGPU = {};
+	std::vector<OGLObject> m_generatedObjects{}; // vektorban eltároljuk a helyét az újonnan generált objektumoknak
 
 	// Geometria inicializálása, és törlése
 	void InitGeometry();
 	void InitParametricSurfaceGeometry();
+	void InitParametricSphereGeometry();
 	void CleanGeometry();
-	void CleanParametricSurfaceGeometry();
+	void CleanParametricSurfaceGeometry(); 
+	void CleanParametricSphereGeometry();
+
+	void RenderGeneratedObject(glm::vec3 objectPosition); // metódus, ami meghívódik minden egyes alkalommal, mikor a 
+														  // felhasználó létre akar hozni egy új objektumot az adott pozícióba
+	void RenderParametricSurface();
+	bool HasCollidingSpheres(glm::vec3 newCoordinates);
 
 	// Textúrázás, és változói
 	GLuint m_SuzanneTextureID = 0;

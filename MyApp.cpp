@@ -27,7 +27,7 @@ struct Torus
 		v *= -glm::two_pi<float>();
 		return glm::vec3(
 			(a * cosf(v) + b) * cosf(u),
-			a * sinf(v),
+			 a * sinf(v),
 			(a * cosf(v) + b) * sinf(u)
 		);
 	}
@@ -37,6 +37,40 @@ struct Torus
 		glm::vec3 dv = GetPos(u, v + 0.01f) - GetPos(u, v - 0.01f);
 
 		return glm::normalize(glm::cross(du, dv));
+	}
+	glm::vec2 GetTex(float u, float v) const noexcept
+	{
+		return glm::vec2(u, v);
+	}
+};
+
+// gömb parametrikus egyenlete
+struct Sphere
+{
+	float r;
+	Sphere(float _r = 1.f) : r(_r) { }
+
+	glm::vec3 GetPos(float u, float v) const noexcept
+	{
+		u *= glm::two_pi<float>();
+		v *= glm::pi<float>();
+
+		return glm::vec3(
+			r * sinf(v) * cosf(u),
+			r * cosf(v),
+			r * sinf(v) * sinf(u)
+		);
+	}
+	glm::vec3 GetNorm(float u, float v) const noexcept
+	{
+		u *= glm::two_pi<float>();
+		v *= glm::pi<float>();
+
+		return glm::vec3(
+			sinf(v) * cosf(u),
+			cosf(v),
+			sinf(v) * sinf(u)
+		);
 	}
 	glm::vec2 GetTex(float u, float v) const noexcept
 	{
@@ -61,7 +95,6 @@ void CMyApp::InitShaders()
 {
 	m_programID = glCreateProgram();
 	AssembleProgram( m_programID, "Vert_PosNormTex.vert", "Frag_LightingSkeleton.frag" );
-
 }
 
 void CMyApp::CleanShaders()
@@ -76,6 +109,7 @@ void CMyApp::InitGeometry()
 	m_SuzanneGPU = CreateGLObjectFromMesh( suzanneMeshCPU, vertexAttribList );
 
 	InitParametricSurfaceGeometry();
+	InitParametricSphereGeometry();
 }
 
 void CMyApp::InitParametricSurfaceGeometry() {
@@ -84,14 +118,24 @@ void CMyApp::InitParametricSurfaceGeometry() {
 	m_ParamSurfaceGPU = CreateGLObjectFromMesh(surfaceMeshCPU, vertexAttribList);
 }
 
+void CMyApp::InitParametricSphereGeometry() {
+	MeshObject<Vertex> sphereMeshCPU = GetParamSurfMesh(Sphere(m_sphereRadius));
+	m_ParamSphereGPU = CreateGLObjectFromMesh(sphereMeshCPU, vertexAttribList);
+}
+
 void CMyApp::CleanGeometry()
 {
 	CleanOGLObject( m_SuzanneGPU );
 	CleanParametricSurfaceGeometry();
+	CleanParametricSphereGeometry();
 }
 
 void CMyApp::CleanParametricSurfaceGeometry() {
 	CleanOGLObject( m_ParamSurfaceGPU );
+}
+
+void CMyApp::CleanParametricSphereGeometry() {
+	CleanOGLObject(m_ParamSphereGPU);
 }
 
 void CMyApp::InitTextures()
@@ -109,7 +153,6 @@ void CMyApp::CleanTextures()
 {
 	glDeleteTextures( 1, &m_SuzanneTextureID );
 	glDeleteTextures( 1, &m_ParamSurfaceTextureID );
-
 }
 
 bool CMyApp::Init()
@@ -165,7 +208,6 @@ void CMyApp::Render()
 
 	// m_camera.SetDistance(m_radius);
 	m_camera.UpdateU();
-
 	glUseProgram( m_programID );
 
 	// ******* SUZANNE ********
@@ -198,28 +240,71 @@ void CMyApp::Render()
 	// ************************************************************************************ 
 
 	// ******* Parametric ********
+	RenderParametricSurface();
+	// ************************************************************************************ 
+
+	// ******* Generált objektum ********
+	for (auto pos : m_newPositionVector) {
+		RenderGeneratedObject(pos);
+	}
+	// ************************************************************************************ 
+
+	// shader kikapcsolasa
+	glUseProgram(0);
+}
+
+void CMyApp::RenderGeneratedObject(glm::vec3 objectPosition) {
+	glUseProgram(m_programID); // shader bekapcsolás
+	glBindVertexArray(m_ParamSphereGPU.vaoID);
+
+	// Textúrázás
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_ParamSurfaceTextureID);
+
+	glm::mat4 matWorld = glm::translate(objectPosition); // objektum eltranszformálása az adott pozícióba
+	// leküldjük a world-ot és annak inverzét
+	glUniformMatrix4fv(ul("world"), 1, GL_FALSE, glm::value_ptr(matWorld));
+	glUniformMatrix4fv(ul("worldIT"), 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(matWorld))));
+
+	// Suzanne kirajzolása
+	glDrawElements(GL_TRIANGLES,
+				   m_SuzanneGPU.count,
+				   GL_UNSIGNED_INT,
+				   nullptr);
+
+	// Textúrák kikapcsolása
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	
+	// VAO kikapcsolása
+	glBindVertexArray(0);
+	
+	// Shader kikapcsolása
+	glUseProgram(0);
+}
+
+void CMyApp::RenderParametricSurface() {
 	glBindVertexArray(m_ParamSurfaceGPU.vaoID);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_ParamSurfaceTextureID);
 
-	matWorld = glm::translate(glm::vec3(0.0, -3.0, 0.0));
+	glm::mat4 matWorld = glm::translate(glm::vec3(0.0, -3.0, 0.0));
 
 	glUniformMatrix4fv(ul("world"), 1, GL_FALSE, glm::value_ptr(matWorld));
 	glUniformMatrix4fv(ul("worldIT"), 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(matWorld))));
 
 	glDrawElements(GL_TRIANGLES,
-				   m_ParamSurfaceGPU.count,
-				   GL_UNSIGNED_INT,
-				   nullptr);
+		m_ParamSurfaceGPU.count,
+		GL_UNSIGNED_INT,
+		nullptr);
 
 	// - Textúrák kikapcsolása, minden egységre külön
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	// ************************************************************************************ 
 
-	// shader kikapcsolasa
-	glUseProgram(0);
+	// VAO kikapcsolása
+	glBindVertexArray(0);
 }
 
 void CMyApp::RenderGUI()
@@ -243,10 +328,10 @@ void CMyApp::RenderGUI()
 		// ********* TELEPORT *********
 		ImGui::SliderFloat3("(X, Y, Z) koordináták", glm::value_ptr(m_newObjectPosition), -10, 30);
 		if (ImGui::Button("Alakzat létrehozása")) {
-			std::cout << "A gombra lett kattintva!\n";
-			std::cout << m_newObjectPosition.x << '\n';
-			std::cout << m_newObjectPosition.y << '\n';
-			std::cout << m_newObjectPosition.z << '\n';
+			// az új pozíciót csak akkor vesszük fel, ha nincs olyan objektum, amivel ütközne
+			if (!HasCollidingSpheres(m_newObjectPosition)) {
+				m_newPositionVector.push_back(m_newObjectPosition);
+			}
 		}
 
 		// ********* FELBONTÁS *********
@@ -271,6 +356,25 @@ void CMyApp::ChangeTitle() {
 	std::stringstream window_title;
 	window_title << "OpenGL " << glVersion[0] << "." << glVersion[1] << " " << title;
 	SDL_SetWindowTitle(win, window_title.str().c_str());
+}
+
+bool CMyApp::HasCollidingSpheres(glm::vec3 newPositions) {
+	// végigiterálunk az összes eddig pozíción, megnézzük, hogy
+	// bármelyikkel ütküzik-e az újonnan felvenni kívánt gömbünk,
+	// erre az alábbi algoritmust használjuk
+	for (auto sphere : m_newPositionVector) {
+		float distance = std::sqrt(
+			std::pow(newPositions.x - sphere.x, 2) +
+			std::pow(newPositions.y - sphere.y, 2) +
+			std::pow(newPositions.z - sphere.z, 2)
+		);
+
+		if (distance <= 2 * m_sphereRadius) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 GLint CMyApp::ul( const char* uniformName ) noexcept
