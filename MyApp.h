@@ -38,6 +38,7 @@ private:
 	SDL_Window *win;
 
 	void ChangeTitle(); // metódus a fejléc módosításához 
+	void TeleportToNextObject(); // teleport metódus
 
 public:
 	CMyApp(SDL_Window *_win);
@@ -65,21 +66,22 @@ protected:
 	//
 
 	glm::vec3 m_newObjectPosition{ 0.0f, 0.0f, 0.0f }; // az új objektum pozíciója, ezt olvassuk be a UI-ból
-	std::vector<glm::vec3> m_newPositionVector{};
+	std::vector<glm::vec3> m_newPositionVector{}; // ebben tároljuk az újonnan létrehozott gömbök koordinátáit
+	int m_nextPosition = -1; // teleport esetén a következő pozíció, kezdetben -1, mert nincs ilyen
 
 	float m_ElapsedTimeInSec = 0.0f;
-	int m_resolutionN = 50;
-	int m_resolutionM = 50;
 
-	const float m_sphereRadius = 2.0f;
+	int m_resolutionN = 50; // kezdeti felbontása a fánknak
+	int m_resolutionM = 50; // szintén
+
+	const float m_sphereRadius = 2.0f; // gömb sugara
 
 	// Suzanne params
-
 	static constexpr glm::vec3 SUZANNE_POS = glm::vec3( 0.0f, 0.0f, 0.0f );
 
 	// Kamera
 	Camera m_camera;
-	float m_radius = 10;
+	float m_radius = 10; // sugár, hogy az objektumtól milyen távol forogjon a kamera
 
 	// Fényforrások
 

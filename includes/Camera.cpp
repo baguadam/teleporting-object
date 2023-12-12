@@ -15,9 +15,7 @@ Camera::Camera(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _worldUp)
 	m_distance = 10.0f;
 }
 
-Camera::~Camera()
-{
-}
+Camera::~Camera() { }
 
 void Camera::SetView(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _worldUp)
 {

@@ -206,8 +206,9 @@ void CMyApp::Render()
 	// ... és a mélységi Z puffert (GL_DEPTH_BUFFER_BIT)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// m_camera.SetDistance(m_radius);
+	// kamera forgatása az objektum körül 
 	m_camera.UpdateU();
+	
 	glUseProgram( m_programID );
 
 	// ******* SUZANNE ********
@@ -331,7 +332,22 @@ void CMyApp::RenderGUI()
 			// az új pozíciót csak akkor vesszük fel, ha nincs olyan objektum, amivel ütközne
 			if (!HasCollidingSpheres(m_newObjectPosition)) {
 				m_newPositionVector.push_back(m_newObjectPosition);
+				// ha még nem volt következő objektum, és sikerült létrehozni egyet,
+				// akkor beállítjuk azt, vagyis az első, mint a kövi objektum
+				if (m_nextPosition == -1) {
+					m_nextPosition = 0;
+				}
+				// ez az az eset, amikor az utolsó objektumon állunk, nem tudunk tovább teleportálni,
+				// és létrehozunk egy újat
+				else if (m_nextPosition == m_newPositionVector.size() - 2) {
+					m_nextPosition++;
+				}
+
 			}
+		}
+
+		if (ImGui::Button("TELEPORT!")) {
+			TeleportToNextObject();
 		}
 
 		// ********* FELBONTÁS *********
@@ -377,6 +393,21 @@ bool CMyApp::HasCollidingSpheres(glm::vec3 newPositions) {
 	return false;
 }
 
+void CMyApp::TeleportToNextObject() {
+	// megnézzük, hogy van-e hova teleportálnunk
+	if (m_nextPosition != -1) {
+		glm::vec3 nextPositionCoordinates = m_newPositionVector[m_nextPosition]; // következő gömb pozíciója, ettől sugár távolságra helyezzük el a kamerát
+		m_camera.SetView(glm::vec3(nextPositionCoordinates.x, nextPositionCoordinates.y, nextPositionCoordinates.z - m_radius),
+					     nextPositionCoordinates,
+					     glm::vec3(0.0, 1.0, 0.0));
+
+		// ha van következő objektumunk, akkor beállítjuk annak az indexét mint next
+		if (m_newPositionVector.size() > m_nextPosition + 1) {
+			++m_nextPosition;
+		}
+	}
+}
+
 GLint CMyApp::ul( const char* uniformName ) noexcept
 {
 	GLuint programID = 0;
@@ -411,6 +442,9 @@ void CMyApp::KeyboardDown(const SDL_KeyboardEvent& key)
 			GLenum polygonMode = ( polygonModeFrontAndBack[ 0 ] != GL_FILL ? GL_FILL : GL_LINE ); // Váltogassuk FILL és LINE között!
 			// https://registry.khronos.org/OpenGL-Refpages/gl4/html/glPolygonMode.xhtml
 			glPolygonMode( GL_FRONT_AND_BACK, polygonMode ); // Állítsuk be az újat!
+		}
+		if (key.keysym.sym == SDLK_SPACE) {
+			TeleportToNextObject();
 		}
 	}
 	m_camera.KeyboardDown( key );
